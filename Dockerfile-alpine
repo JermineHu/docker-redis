@@ -1,0 +1,17 @@
+FROM alpine:edge as redis
+MAINTAINER Jermine.hu@qq.com
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && apk update && apk add --no-cache upx binutils redis && \
+    cd /usr/bin && upx --best redis-server
+FROM alpine:edge
+MAINTAINER Jermine.hu@qq.com
+# add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
+RUN addgroup -S redis && adduser -S -G redis redis ;\
+    sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && apk update && apk add --no-cache redis && rm /usr/bin/redis-cli  /usr/bin/redis-benchmark && \
+    mkdir /data && chown redis:redis /data
+VOLUME /data
+WORKDIR /data
+COPY --from=redis:5.0.5-alpine /usr/local/bin/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY --from=redis /usr/bin/redis-server /usr/bin/redis-server
+ENTRYPOINT ["docker-entrypoint.sh"]
+EXPOSE 6379
+CMD ["redis-server"]

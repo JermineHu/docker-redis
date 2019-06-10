@@ -1,0 +1,16 @@
+FROM alpine:edge as redis
+MAINTAINER Jermine.hu@qq.com
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && apk update && apk add --no-cache upx binutils redis && \
+    cd /usr/bin && upx --best redis-server
+FROM jermine/bbox
+MAINTAINER Jermine.hu@qq.com
+RUN mkdir -p /home/redis && touch /etc/group && touch /etc/passwd && addgroup -S redis && adduser -S -G redis redis && \
+    mkdir /data && chown redis:redis /data
+VOLUME /data
+WORKDIR /data
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY --from=redis /usr/bin/redis-server /usr/bin/redis-server
+COPY --from=redis /lib/ld-musl-x86_64.so.1 /lib/ld-musl-x86_64.so.1
+ENTRYPOINT ["docker-entrypoint.sh"]
+EXPOSE 6379
+CMD ["redis-server"]
