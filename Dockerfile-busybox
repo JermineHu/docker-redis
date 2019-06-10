@@ -10,7 +10,6 @@ VOLUME /data
 WORKDIR /data
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 COPY --from=redis /usr/bin/redis-server /usr/bin/redis-server
-COPY --from=redis /lib/ld-musl-x86_64.so.1 /lib/ld-musl-x86_64.so.1
 ENTRYPOINT ["docker-entrypoint.sh"]
 EXPOSE 6379
 CMD ["redis-server"]
